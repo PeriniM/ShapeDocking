@@ -112,62 +112,99 @@ def plot_histograms(polygon, ax0, ax1, ax2, reverse=False, highlight_side=None):
     ax2.set_ylabel("Normal Orientation (degrees)")
 
 def compute_all_differences(polygon1, polygon2):
-    angles1, _, _ = compute_histograms(polygon1)
-    angles2, _, _ = compute_histograms(polygon2, reverse=True)
+    angles1, _, normals1 = compute_histograms(polygon1)
+    angles2, _, normals2 = compute_histograms(polygon2, reverse=True)
     
-    difference_matrix = []
+    angle_diff_matrix = []
+    normal_diff_matrix = []
 
+    # Compute the difference between each angle in polygon1 and polygon2
     for angle2 in angles2:
         row = []
         for angle1 in angles1:
             diff = abs(angle2 - angle1)
             row.append(diff)
-        difference_matrix.append(row)
+        angle_diff_matrix.append(row)
+    
+    # Compute the difference between each normal orientation in polygon1 and polygon2
+    for normal2 in normals2:
+        row = []
+        for normal1 in normals1:
+            diff = abs(normal2 - normal1)
+            row.append(diff)
+        normal_diff_matrix.append(row)
 
-    return np.array(difference_matrix)
+    return np.array(angle_diff_matrix), np.array(normal_diff_matrix)
 
 def plot_3d_difference(polygon1, polygon2):
-    difference_matrix = compute_all_differences(polygon1, polygon2)
+    angle_diff_matrix, normal_diff_matrix = compute_all_differences(polygon1, polygon2)
 
     x = np.arange(1, len(polygon1) + 1)
     y = np.arange(1, len(polygon2) + 1)
     x, y = np.meshgrid(x, y)
     
-    fig = plt.figure(figsize=(10, 6))
-    ax = fig.add_subplot(111, projection='3d')
+    fig, ax = plt.subplots(1, 2, subplot_kw={'projection': '3d'})
     
-    ax.plot_surface(x, y, difference_matrix, cmap='viridis', edgecolor='blue')
+    ax[0].plot_surface(x, y, angle_diff_matrix, cmap='viridis', linewidth=0.2)
+    ax[1].plot_surface(x, y, normal_diff_matrix, cmap='viridis', linewidth=0.2)
     
-    ax.set_xlabel('Polygon1 Edges')
-    ax.set_ylabel('Polygon2 Edges')
-    ax.set_zlabel('Angle Difference (degrees)')
-    ax.set_title("Angle Difference between Polygon Edges")
+    ax[0].set_xlabel('Polygon1 Edges')
+    ax[0].set_ylabel('Polygon2 Edges')
+    ax[0].set_zlabel('Angle Difference')
+    ax[0].set_title("Angle Difference between Polygon Edges")
+
+    ax[1].set_xlabel('Polygon1 Edges')
+    ax[1].set_ylabel('Polygon2 Edges')
+    ax[1].set_zlabel('Normal Orientation Difference')
+    ax[1].set_title("Normal Orientation Difference between Polygon Edges")
+
     # Adjusting x-axis tick labels to start from 1
-    ax.set_xticks(np.arange(len(polygon1)))
-    ax.set_xticklabels([str(i+1) for i in range(len(polygon1))])
-    ax.set_yticks(np.arange(len(polygon2)))
-    ax.set_yticklabels([str(i+1) for i in range(len(polygon2))])
+    ax[0].set_xticks(np.arange(len(polygon1)))
+    ax[0].set_xticklabels([str(i+1) for i in range(len(polygon1))])
+    ax[0].set_yticks(np.arange(len(polygon2)))
+    ax[0].set_yticklabels([str(i+1) for i in range(len(polygon2))])
+    ax[0].invert_yaxis()  # To show the 1st edge of Polygon2 at the top
+
+    # Adjusting x-axis tick labels to start from 1
+    ax[1].set_xticks(np.arange(len(polygon1)))
+    ax[1].set_xticklabels([str(i+1) for i in range(len(polygon1))])
+    ax[1].set_yticks(np.arange(len(polygon2)))
+    ax[1].set_yticklabels([str(i+1) for i in range(len(polygon2))])
+    ax[1].invert_yaxis()  # To show the 1st edge of Polygon2 at the top
 
     plt.show()
 
 def plot_heatmap_difference(polygon1, polygon2):
-    difference_matrix = compute_all_differences(polygon1, polygon2)
+    angle_diff_matrix, normal_diff_matrix = compute_all_differences(polygon1, polygon2)
     
-    plt.figure(figsize=(10, 6))
-    
-    ax = sns.heatmap(difference_matrix, cmap='inferno', annot=True, fmt=".1f")
-    
-    ax.set_xlabel('Polygon1 Edges')
-    ax.set_ylabel('Polygon2 Edges')
-    ax.set_title("Angle Difference between Polygon Edges")
+    fig, ax = plt.subplots(1, 2, figsize=(10, 6))
+
+    sns.heatmap(angle_diff_matrix, cmap='viridis', ax=ax[0], cbar=False, annot=True, fmt=".0f")
+
+    ax[0].set_xlabel('Polygon1 Edges')
+    ax[0].set_ylabel('Polygon2 Edges')
+    ax[0].set_title("Angle Difference between Polygon Edges")
     
     # Adjusting x-axis tick labels to start from 1
-    ax.set_xticks(np.arange(len(polygon1)))
-    ax.set_xticklabels([str(i+1) for i in range(len(polygon1))])
-    ax.set_yticks(np.arange(len(polygon2)))
-    ax.set_yticklabels([str(i+1) for i in range(len(polygon2))])
-    ax.invert_yaxis()  # To show the 1st edge of Polygon2 at the top
+    ax[0].set_xticks(np.arange(len(polygon1)))
+    ax[0].set_xticklabels([str(i+1) for i in range(len(polygon1))])
+    ax[0].set_yticks(np.arange(len(polygon2)))
+    ax[0].set_yticklabels([str(i+1) for i in range(len(polygon2))])
+    ax[0].invert_yaxis()  # To show the 1st edge of Polygon2 at the top
     
+    sns.heatmap(normal_diff_matrix, cmap='viridis', ax=ax[1], cbar=False, annot=True, fmt=".0f")
+
+    ax[1].set_xlabel('Polygon1 Edges')
+    ax[1].set_ylabel('Polygon2 Edges')
+    ax[1].set_title("Normal Orientation Difference between Polygon Edges")
+
+    # Adjusting x-axis tick labels to start from 1
+    ax[1].set_xticks(np.arange(len(polygon1)))
+    ax[1].set_xticklabels([str(i+1) for i in range(len(polygon1))])
+    ax[1].set_yticks(np.arange(len(polygon2)))
+    ax[1].set_yticklabels([str(i+1) for i in range(len(polygon2))])
+    ax[1].invert_yaxis()  # To show the 1st edge of Polygon2 at the top
+
     plt.show()
 
 polygon1 = [(1,3), (2,3), (2,2), (3,2), (3,1), (2,1), (2,0), (1,0), (1,1), (0,1), (0,2), (1,2)]
@@ -183,6 +220,6 @@ plt.tight_layout()
 plt.show()
 
 # Plot the difference between the two shapes angles
-# plot_3d_difference(polygon1, polygon2)
-# # Plot the difference between the two shapes angles as a heatmap
-# plot_heatmap_difference(polygon1, polygon2)
+plot_3d_difference(polygon1, polygon2)
+# Plot the difference between the two shapes angles as a heatmap
+plot_heatmap_difference(polygon1, polygon2)
