@@ -48,12 +48,11 @@ def compute_histograms(polygon, reverse=False):
         # Calculate normal orientation (assuming it points to the left of the direction of travel)
         normal = np.array([-side[1], side[0]])
         normal_orientation = np.degrees(np.arctan2(normal[1], normal[0]))
-        if normal_orientation < 0:  # Convert negative angles to their positive equivalent
-            normal_orientation += 360
         normals.append(normal_orientation)
     
     if reverse:
         angles = [360 - angle for angle in angles]
+        normals = [normal*-1 for normal in normals]
 
     return angles, side_lengths, normals
 
@@ -75,10 +74,6 @@ def plot_histograms(polygon, ax0, ax1, ax2, reverse=False, highlight_side=None):
     side_lengths.append(side_lengths[-1])
     angles.append(angles[-1])
     normals.append(normals[-1])
-
-    if reverse:
-        angles = 360 - np.array(angles)
-        normals = 360 - np.array(normals)
 
     edges = np.cumsum(side_lengths)  # Add a zero to the end to make the lengths and angles the same length
     # Angle Histogram
@@ -182,12 +177,12 @@ fig, axs = plt.subplots(2, 3)
 
 # Plot Histograms for each shape
 plot_histograms(polygon1, axs[0, 0], axs[0, 1], axs[0, 2])
-plot_histograms(polygon2, axs[1, 0], axs[1, 1], axs[1, 2] , reverse=False)
+plot_histograms(polygon2, axs[1, 0], axs[1, 1], axs[1, 2] , reverse=True)
 
 plt.tight_layout()
 plt.show()
 
 # Plot the difference between the two shapes angles
-plot_3d_difference(polygon1, polygon2)
-# Plot the difference between the two shapes angles as a heatmap
-plot_heatmap_difference(polygon1, polygon2)
+# plot_3d_difference(polygon1, polygon2)
+# # Plot the difference between the two shapes angles as a heatmap
+# plot_heatmap_difference(polygon1, polygon2)
