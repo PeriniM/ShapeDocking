@@ -2,6 +2,9 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 import seaborn as sns
+from skimage.morphology import local_minima
+from shapely.geometry import Polygon
+from shapely.affinity import rotate, translate
 
 def compute_histograms(polygon, reverse=False):
     def angle_between_lines(p1, p2, p3):
@@ -180,7 +183,6 @@ def plot_heatmap_difference(polygon1, polygon2):
     fig, ax = plt.subplots(1, 2, figsize=(10, 6))
 
     sns.heatmap(angle_diff_matrix, cmap='viridis', ax=ax[0], cbar=False, annot=True, fmt=".0f")
-
     ax[0].set_xlabel('Polygon1 Edges')
     ax[0].set_ylabel('Polygon2 Edges')
     ax[0].set_title("Angle Difference between Polygon Edges")
@@ -193,7 +195,6 @@ def plot_heatmap_difference(polygon1, polygon2):
     ax[0].invert_yaxis()  # To show the 1st edge of Polygon2 at the top
     
     sns.heatmap(normal_diff_matrix, cmap='viridis', ax=ax[1], cbar=False, annot=True, fmt=".0f")
-
     ax[1].set_xlabel('Polygon1 Edges')
     ax[1].set_ylabel('Polygon2 Edges')
     ax[1].set_title("Normal Orientation Difference between Polygon Edges")
@@ -204,6 +205,96 @@ def plot_heatmap_difference(polygon1, polygon2):
     ax[1].set_yticks(np.arange(len(polygon2)))
     ax[1].set_yticklabels([str(i+1) for i in range(len(polygon2))])
     ax[1].invert_yaxis()  # To show the 1st edge of Polygon2 at the top
+
+    # Detect local minima in angle_diff_matrix
+    angle_mins = local_minima(angle_diff_matrix)
+    angle_pairs = list(zip(*np.where(angle_mins)))
+    normal_diff_values = normal_diff_matrix[angle_mins]
+    # Plotting red dots on minima locations for both heatmaps based on angle_minima locations
+    for (y, x) in angle_pairs:
+        ax[0].scatter(x + 0.5, y + 0.5, color='red', s=100)  # +0.5 to center dot in the square
+        ax[1].scatter(x + 0.5, y + 0.5, color='red', s=100)  # +0.5 to center dot in the square
+
+    plt.tight_layout()
+    plt.show()
+
+    return angle_pairs, normal_diff_values
+
+def midpoint(point1, point2):
+    return ((point1[0] + point2[0]) / 2, (point1[1] + point2[1]) / 2)
+
+def is_similar(polygon1, polygon2):
+    """Check if two polygons are similar based on their area and centroid."""
+    return abs(polygon1.area - polygon2.area) < 1e-6 and \
+           abs(polygon1.centroid.x - polygon2.centroid.x) < 1e-6 and \
+           abs(polygon1.centroid.y - polygon2.centroid.y) < 1e-6
+
+def plot_docked_polygons(polygon1, polygon2, angle_minima_pairs, normal_diff):
+    
+    valid_configs = []
+    seen_configs = []
+    
+    for ((y, x), rotation) in zip(angle_minima_pairs, normal_diff):
+        midpoint1 = midpoint(polygon1[x], polygon1[(x + 1) % len(polygon1)])
+        midpoint2 = midpoint(polygon2[y], polygon2[(y + 1) % len(polygon2)])
+        trans_x, trans_y = midpoint1[0] - midpoint2[0], midpoint1[1] - midpoint2[1]
+        translated_polygon2 = translate(Polygon(polygon2), xoff=trans_x, yoff=trans_y)
+        rotated_polygon2 = rotate(translated_polygon2, rotation, origin=midpoint1)
+        
+        if not Polygon(polygon1).intersects(rotated_polygon2.buffer(-0.01)):
+            is_duplicate = False
+            for seen_polygon in seen_configs:
+                if is_similar(rotated_polygon2, seen_polygon):
+                    is_duplicate = True
+                    break
+            
+            if not is_duplicate:
+                valid_configs.append(((y, x), rotation))
+                seen_configs.append(rotated_polygon2)
+    
+    n = len(valid_configs)
+    
+    if n == 0:
+        print("No valid configurations found.")
+        return
+
+    columns = int(np.ceil(np.sqrt(n)))
+    rows = int(np.ceil(n / columns))
+    fig, axs = plt.subplots(rows, columns, constrained_layout=True)
+    if rows == 1 and columns == 1:
+        axs = np.array([axs])
+
+    for idx in range(n):
+        if rows == 1 or columns == 1:
+            ax = axs[idx]
+        else:
+            ax = axs[idx // columns, idx % columns]
+
+        ((y, x), rotation) = valid_configs[idx]
+        
+        midpoint1 = midpoint(polygon1[x], polygon1[(x + 1) % len(polygon1)])
+        midpoint2 = midpoint(polygon2[y], polygon2[(y + 1) % len(polygon2)])
+        trans_x, trans_y = midpoint1[0] - midpoint2[0], midpoint1[1] - midpoint2[1]
+        translated_polygon2 = translate(Polygon(polygon2), xoff=trans_x, yoff=trans_y)
+        rotated_polygon2 = rotate(translated_polygon2, rotation, origin=midpoint1)
+        
+        x1, y1 = Polygon(polygon1).exterior.xy
+        ax.fill(x1, y1, 'C0', alpha=0.7)
+        
+        x2, y2 = rotated_polygon2.exterior.xy
+        ax.fill(x2, y2, 'C1', alpha=0.7)
+        
+        ax.set_aspect('equal', 'box')
+        ax.set_title("Configuration {}".format(idx+1))
+        # hide bouding box
+        ax.axis('off')
+
+    # Hide any unused subplots
+    for idx in range(n, rows*columns):
+        if rows == 1 or columns == 1:
+            axs[idx].axis('off')
+        else:
+            axs[idx // columns, idx % columns].axis('off')
 
     plt.show()
 
@@ -219,7 +310,10 @@ plot_histograms(polygon2, axs[1, 0], axs[1, 1], axs[1, 2] , reverse=True)
 plt.tight_layout()
 plt.show()
 
-# Plot the difference between the two shapes angles
-plot_3d_difference(polygon1, polygon2)
 # Plot the difference between the two shapes angles as a heatmap
-plot_heatmap_difference(polygon1, polygon2)
+angle_minima_pairs, normal_diff = plot_heatmap_difference(polygon1, polygon2)
+print("Minima pairs for Angle Differences:", angle_minima_pairs)
+print("Angle to rotate counter clock-wise:", normal_diff)
+plot_docked_polygons(polygon1, polygon2, angle_minima_pairs, normal_diff)
+
+
