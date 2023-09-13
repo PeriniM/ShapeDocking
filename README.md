@@ -55,6 +55,12 @@ For each minima detected:
 
 ![All Configurations](images/all_matches.png)
 
+### 5. **Good Matches Configuration**:
+
+The final step is to determine if there are intersections between the two polygons. If there are no intersections, the configuration is considered a good match.
+
+![Good Matching Configurations](images/good_matches.png)
+
 ## Conclusion
 
 This project provides an innovative method to align two distinct polygons using histogram analysis, heatmap generation, and computational geometry. By integrating multiple techniques, it becomes possible to not just find all feasible configurations, but to discern which of these is the most harmonious.
