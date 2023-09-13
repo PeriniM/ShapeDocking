@@ -53,6 +53,8 @@ This project provides an innovative method to align two distinct polygons using 
 
 - **Polygon Generation**: The current implementation of the project uses a fixed set of polygons. In the future, it would be interesting to generate random polygons and test the algorithm on them.
 
+- **Continuous edges**: The current implementation of the project uses discrete edges. In the future, it would be interesting to use continuous edges and test the algorithm on them.
+
 ## References
 
 - [A Polygon and Point-Based Approach to Matching Geospatial Features](https://www.mdpi.com/2220-9964/6/12/399)
