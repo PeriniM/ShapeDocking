@@ -288,6 +288,12 @@ def plot_docked_polygons(polygon1, polygon2, angle_minima_pairs, normal_diff, sh
         # hide bouding box
         ax.axis('off')
 
+        edge2_coords = list(rotated_polygon2.exterior.coords)
+        edge2_x = [edge2_coords[y][0], edge2_coords[(y + 1) % len(edge2_coords)][0]]
+        edge2_y = [edge2_coords[y][1], edge2_coords[(y + 1) % len(edge2_coords)][1]]
+
+        ax.plot(edge2_x, edge2_y, 'r-', lw=1)  # Black line for edge2
+
     # Hide any unused subplots
     for idx in range(n, rows*columns):
         if rows == 1 or columns == 1:
@@ -313,6 +319,6 @@ plt.show()
 angle_minima_pairs, normal_diff = plot_heatmap_difference(polygon1, polygon2)
 print("Minima pairs for Angle Differences:", angle_minima_pairs)
 print("Angle to rotate counter clock-wise:", normal_diff)
-plot_docked_polygons(polygon1, polygon2, angle_minima_pairs, normal_diff, show_all=True)
+plot_docked_polygons(polygon1, polygon2, angle_minima_pairs, normal_diff, show_all=False)
 
 
