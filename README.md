@@ -1,5 +1,15 @@
 # Shape Docking
 ![Good Matching Configurations](images/good_matches.png)
+
+## Installation
+```bash
+git clone https://github.com/PeriniM/ShapeDocking.git
+cd ShapeDocking
+python -m venv env
+source env/bin/activate (or ./env/Script/activate)
+pip install -r requirements.txt
+```
+
 ## Problem Statement
 
 The challenge is to determine how two distinct polygons can align without overlap. This involves understanding their internal structures, their orientations, and then making informed decisions about their spatial configuration.
