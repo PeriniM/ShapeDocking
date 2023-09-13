@@ -313,6 +313,6 @@ plt.show()
 angle_minima_pairs, normal_diff = plot_heatmap_difference(polygon1, polygon2)
 print("Minima pairs for Angle Differences:", angle_minima_pairs)
 print("Angle to rotate counter clock-wise:", normal_diff)
-plot_docked_polygons(polygon1, polygon2, angle_minima_pairs, normal_diff, show_all=False)
+plot_docked_polygons(polygon1, polygon2, angle_minima_pairs, normal_diff, show_all=True)
 
 
