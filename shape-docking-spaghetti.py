@@ -229,8 +229,7 @@ def is_similar(polygon1, polygon2):
            abs(polygon1.centroid.x - polygon2.centroid.x) < 1e-6 and \
            abs(polygon1.centroid.y - polygon2.centroid.y) < 1e-6
 
-def plot_docked_polygons(polygon1, polygon2, angle_minima_pairs, normal_diff):
-    
+def plot_docked_polygons(polygon1, polygon2, angle_minima_pairs, normal_diff, show_all=False):
     valid_configs = []
     seen_configs = []
     
@@ -241,7 +240,7 @@ def plot_docked_polygons(polygon1, polygon2, angle_minima_pairs, normal_diff):
         translated_polygon2 = translate(Polygon(polygon2), xoff=trans_x, yoff=trans_y)
         rotated_polygon2 = rotate(translated_polygon2, rotation, origin=midpoint1)
         
-        if not Polygon(polygon1).intersects(rotated_polygon2.buffer(-0.01)):
+        if not Polygon(polygon1).intersects(rotated_polygon2.buffer(-0.01)) or show_all:
             is_duplicate = False
             for seen_polygon in seen_configs:
                 if is_similar(rotated_polygon2, seen_polygon):
@@ -314,6 +313,6 @@ plt.show()
 angle_minima_pairs, normal_diff = plot_heatmap_difference(polygon1, polygon2)
 print("Minima pairs for Angle Differences:", angle_minima_pairs)
 print("Angle to rotate counter clock-wise:", normal_diff)
-plot_docked_polygons(polygon1, polygon2, angle_minima_pairs, normal_diff)
+plot_docked_polygons(polygon1, polygon2, angle_minima_pairs, normal_diff, show_all=False)
 
 
